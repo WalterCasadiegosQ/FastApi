@@ -1,16 +1,32 @@
 services:
-  web:
+  api:
     build: .
+    container_name: fastapi_app
     ports:
       - "8000:8000"
-    volumes:
-      - ./:/app  
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      - HOLA=MUNDO
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    networks:
-      - redlocal
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/notas_db
+      - AUTOR=Walter
 
-networks:
-  redlocal:
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: notas_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
+volumes:
+  postgres_data:
