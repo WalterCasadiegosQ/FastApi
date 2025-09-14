@@ -4,6 +4,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
+#Direccion archivo plano
+DATA_FILE = "/data/notas.txt"
+
 # Leer las variables de entorno
 DATABASE_URL = os.getenv("DATABASE_URL")
 AUTOR = os.getenv("AUTOR", "Desconocido")
@@ -28,10 +31,12 @@ app = FastAPI()
 async def root():
     return {"message": "Bienvenido a la API de Notas con FastAPI y PostgreSQL!"}
 
+# GET - obtener autor
 @app.get("/autor")
 async def get_autor():
     return {"autor": AUTOR}
 
+# GET - obtener nota BD
 @app.get("/notas-db")
 async def get_notas():
     db = SessionLocal()
@@ -39,6 +44,7 @@ async def get_notas():
     db.close()
     return {"notas": [n.contenido for n in notas]}
 
+# POST - agregar nota BD
 @app.post("/notas-db")
 async def create_nota(request: Request):
     data = await request.json()
@@ -49,3 +55,27 @@ async def create_nota(request: Request):
     db.commit()
     db.close()
     return {"message": "Nota guardada en la base de datos!"}
+
+# POST - agregar una nota
+@app.post("/nota")
+async def guardar_nota(request: Request):
+    nota = await request.body()
+    with open(DATA_FILE, "a") as f:
+        f.write(nota.decode() + "\n")
+    return {"mensaje": "Nota guardada"}
+
+# GET - obtener todas las notas
+@app.get("/notas")
+def leer_notas():
+    if not os.path.exists(DATA_FILE):
+        return {"notas": []}
+    with open(DATA_FILE, "r") as f:
+        return {"notas": f.read().splitlines()}
+
+# GET - contar cantidad de notas
+@app.get("/conteo")
+def contar_notas():
+    if not os.path.exists(DATA_FILE):
+        return {"conteo": 0}
+    with open(DATA_FILE, "r") as f:
+        return {"conteo": len(f.readlines())}

@@ -9,7 +9,9 @@ services:
         condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/notas_db
-      - AUTOR=Walter
+      - AUTOR=WalteryBrayan
+    volumes:
+      - data:/data 
 
   db:
     image: postgres:15
@@ -30,3 +32,4 @@ services:
 
 volumes:
   postgres_data:
+  data:
